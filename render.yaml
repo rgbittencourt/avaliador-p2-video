@@ -2,8 +2,11 @@ services:
   - type: web
     name: avaliador-p2-video
     runtime: docker
+    repo: https://github.com/rgbittencourt/avaliador-p2-video
+    branch: main
+    region: ohio
     plan: free
-    autoDeploy: true
+    autoDeployTrigger: commit
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV

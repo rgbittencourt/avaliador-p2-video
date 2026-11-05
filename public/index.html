@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <title>Avaliador P2 · Roteiro e Vídeo</title>
+  <style>
+    :root{font-family:Inter,system-ui,sans-serif;color:#17324d;background:#f3f7f8}*{box-sizing:border-box}body{margin:0}header{background:linear-gradient(135deg,#0f766e,#155e75);color:white;padding:24px}.wrap{max-width:1280px;margin:auto;padding:20px}.grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(300px,1fr);gap:18px}@media(max-width:900px){.grid{grid-template-columns:1fr}}.card{background:white;border:1px solid #d7e2e5;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 3px 12px #0f172a0a}h1,h2,h3{margin-top:0}label{display:block;font-weight:650;margin:10px 0 5px}input,select,textarea,button{font:inherit}input,select,textarea{width:100%;padding:10px;border:1px solid #b8c8cd;border-radius:8px;background:white}textarea{min-height:90px;resize:vertical}.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:640px){.cols{grid-template-columns:1fr}}button{border:0;border-radius:9px;padding:10px 14px;background:#0f766e;color:white;font-weight:700;cursor:pointer}button.secondary{background:#e7f2f1;color:#0f5f59}button.danger{background:#b42318}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.criterion{border-top:1px solid #e4ecee;padding:14px 0}.criterion:first-child{border-top:0}.criterion label{margin:0 0 7px}.criterion small{display:block;color:#526874;margin-top:6px}.score{font-size:42px;font-weight:800;color:#0f766e}.muted{color:#607580}.status{padding:10px;border-radius:8px;background:#ecfdf5;color:#166534;margin:10px 0}.status.error{background:#fef2f2;color:#991b1b}table{width:100%;border-collapse:collapse}th,td{text-align:left;border-bottom:1px solid #e3eaec;padding:8px}.sticky{position:sticky;top:12px}.hidden{display:none}
+  </style>
+</head>
+<body>
+<header><div class="wrap"><h1>Avaliador P2 · Roteiro e Vídeo</h1><div>TEDPRO/IFSC · Portfólio “Apresentando meu desafio”</div></div></header>
+<main class="wrap grid">
+  <section>
+    <div class="card"><h2>1. Turma e estudante</h2><div class="cols"><div><label>Turma ativa</label><select id="turma"></select></div><div><label>Nova turma</label><input id="novaTurma" placeholder="Ex.: TEDPRO 2026 · Turma A"></div></div><div class="actions"><button id="criarTurma">Criar turma</button><button class="secondary" id="backup">Salvar cópia no GitHub</button></div>
+      <div class="cols"><div><label>Nome</label><input id="nome"></div><div><label>Matrícula</label><input id="matricula"></div></div><label>Orientador(a)</label><input id="orientador" placeholder="Prof. Rogério"><label>Tema/Desafio</label><textarea id="desafio"></textarea>
+    </div>
+    <div class="card"><h2>2. Roteiro</h2><p class="muted">Cole ou revise o conteúdo extraído do PDF. A interpretação semântica pode ser acionada depois de revisar os campos.</p><label>Conformidade com o modelo</label><input id="conformidadeModelo" placeholder="Modelo oficial, Cenas 1 a 5, Voz/Imagens/Outros"><div id="cenas"></div><label>Declaração de uso de IA</label><select id="iaDeclaracao"><option value="">Não informado</option><option>Utilizou IA</option><option>Não utilizou IA</option></select><label>Descrição</label><textarea id="iaDescricao"></textarea></div>
+    <div class="card"><h2>3. Vídeo</h2><label>Link do vídeo</label><input id="linkVideo" type="url"><div class="cols"><div><label>Duração</label><input id="videoDuracao" placeholder="Ex.: 1:58"></div><div><label>Dados técnicos</label><input id="videoTecnico" placeholder="Cortes, quadros, áudio"></div></div><label>Observação do professor</label><textarea id="videoObservacao"></textarea><label>Observação sobre linguagens</label><textarea id="obsLinguagens"></textarea></div>
+    <div class="card"><h2>4. Rubrica oficial</h2><div id="rubrica"></div><div class="actions"><button id="avaliar">✨ Avaliar automaticamente</button><button class="secondary" id="nova">Nova avaliação</button></div></div>
+  </section>
+  <aside><div class="card sticky"><h2>Resultado</h2><div class="score"><span id="nota">0,0</span> / 10</div><div><span id="pontos">0</span> / 30 pontos</div><div id="status" class="status hidden"></div><label>Feedback gerado</label><textarea id="feedback" style="min-height:360px"></textarea><div class="actions"><button id="salvar">Salvar aluno</button><button class="secondary" id="copiar">Copiar feedback</button></div><h3 style="margin-top:22px">Alunos salvos</h3><table><thead><tr><th>Aluno</th><th>Nota</th><th></th></tr></thead><tbody id="avaliacoes"></tbody></table></div></aside>
+</main>
+<script src="/app.js"></script>
+</body></html>
