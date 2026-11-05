@@ -182,8 +182,20 @@ async function sincronizarBackupGitHub(){
   return githubBackup.sincronizar(await ler());
 }
 
+async function verificarSaude(){
+  if(pool){
+    await prepararPostgres();
+    await pool.query('SELECT 1');
+  }
+  return {
+    armazenamento: pool ? 'postgres' : 'arquivo',
+    postgresConfigurado: Boolean(pool),
+    backupGitHubConfigurado: githubBackup.status().configurado
+  };
+}
+
 function statusBackupGitHub(){
   return githubBackup.status();
 }
 
-module.exports = {listarTurmas, criarTurma, renomearTurma, excluirTurma, listarAvaliacoes, upsertAvaliacao, importarTurma, removerAvaliacao, limparAvaliacoes, sincronizarBackupGitHub, statusBackupGitHub};
+module.exports = {listarTurmas, criarTurma, renomearTurma, excluirTurma, listarAvaliacoes, upsertAvaliacao, importarTurma, removerAvaliacao, limparAvaliacoes, sincronizarBackupGitHub, statusBackupGitHub, verificarSaude};

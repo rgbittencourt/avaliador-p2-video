@@ -30,7 +30,14 @@ app.use((req,res,next)=>{
 
 app.use(express.json({limit:'4mb'}));
 app.use(express.static(path.join(__dirname,'public')));
-app.get('/api/health',(_req,res)=>res.json({ok:true,openaiConfigurada:Boolean(OPENAI_API_KEY)}));
+app.get('/api/health',async(_req,res)=>{
+  try{
+    const infraestrutura=await db.verificarSaude();
+    res.json({ok:true,openaiConfigurada:Boolean(OPENAI_API_KEY),...infraestrutura});
+  }catch(e){
+    res.status(503).json({ok:false,openaiConfigurada:Boolean(OPENAI_API_KEY),erro:'Falha na infraestrutura persistente.'});
+  }
+});
 
 function precisaChave(res){
   if(OPENAI_API_KEY) return false;
