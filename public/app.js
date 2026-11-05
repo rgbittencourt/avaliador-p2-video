@@ -209,20 +209,15 @@ function simpleMatch(text,re){const m=text.match(re);return cleanPdfText(m?.[1]|
 function layoutRows(content){const rows=[];for(const item of content.items){const x=item.transform[4],y=item.transform[5],width=item.width||0;let row=rows.find(r=>Math.abs(r.y-y)<2.2);if(!row){row={y,items:[]};rows.push(row);}row.items.push({x,width,text:item.str});}rows.sort((a,b)=>b.y-a.y);for(const row of rows)row.items.sort((a,b)=>a.x-b.x);return rows;}
 function rowText(row){let line='',end=null;for(const item of row.items){if(end!==null){const gap=item.x-end;line+=gap>28?'\t':gap>2?' ':'';}line+=item.text;end=item.x+item.width;}return line.trimEnd();}
 function stripFormPrompt(text,patterns=[]){let out=String(text||'').trim();for(const re of patterns)out=out.replace(re,'').trim();return out;}
-// separa colunas Voz (esquerda) e Imagens/Outros (direita) por posição X, dentro de uma faixa de cena
+// Separa Voz, Imagens e Outros/OBS pela posição X detectada no cabeçalho da tabela.
+// Imagens e Outros/OBS são reunidos no campo combinado exibido pelo aplicativo.
 function splitVozImg(startRe,endRe){
-  let ativa=false;const voz=[],img=[];
-  for(const rows of structuredPageRows){for(const row of rows){const t=rowText(row);
-    if(startRe.test(t)){ativa=true;}
-    else if(ativa&&endRe&&endRe.test(t)){ativa=false;}
-    if(!ativa)continue;
-    if(/Especializa[cç][aã]o|Instituto Federal|Rua:\s*14|Fone:|CNPJ/i.test(t))continue;
-    const vz=row.items.filter(i=>i.x>=150&&i.x<470).map(i=>i.text).join(' ').trim();
-    const im=row.items.filter(i=>i.x>=470).map(i=>i.text).join(' ').trim();
-    if(vz)voz.push(vz);if(im)img.push(im);
-  }}
-  return {voz:cleanPdfText(voz.join(' ')).replace(/^(CENA\s*\d+|O desafio|Como\s*descobri\??|Contexto|Público|Duas\s*ideias|INTRODUÇÃO|DESENVOLVIMENTO|CONCLUSÃO)\s*/gi,'').trim(),
-          img:cleanPdfText(img.join(' ')).replace(/^Ex:?\s*/i,'').trim()};
+  const partes=window.P2PdfColumns?.collect(structuredPageRows,startRe,endRe)||{voice:[],images:[],notes:[]};
+  const voz=cleanPdfText(partes.voice.join(' ')).replace(/^(CENA\s*\d+|O desafio|Como\s*descobri\??|Contexto|Público|Duas\s*ideias|INTRODUÇÃO|DESENVOLVIMENTO|CONCLUSÃO)\s*/gi,'').trim();
+  const imagens=cleanPdfText(partes.images.join(' ')).replace(/^Ex:?\s*/i,'').trim();
+  const outros=cleanPdfText(partes.notes.join(' ')).replace(/^Ex:?\s*/i,'').trim();
+  const img=[imagens&&`Imagens: ${imagens}`,outros&&`Outros/OBS: ${outros}`].filter(Boolean).join('\n');
+  return {voz,img};
 }
 function applyPreliminaryExtraction(text,fileName=''){
   let nome=simpleMatch(text,/Nome completo:\s*([^\n]+)/i);if(!nome){const m=String(fileName).match(/\(([^()]+)\)\s*\.pdf$/i);nome=m?.[1]?.trim()||'';}$('nome').value=nome;
@@ -245,7 +240,7 @@ function openImage(title,src){$('modalTitle').textContent=title;$('modalImage').
 function closeModal(){$('pageModal').classList.add('hidden');$('modalImage').src='';document.body.style.overflow='';}
 async function semanticExtract(){
   if(!rawPdfPages.length)return alert('Importe o PDF do roteiro primeiro.');const b=$('semanticExtract');b.disabled=true;b.textContent='Interpretando...';$('pdfStatus').textContent='Separando semanticamente as cenas e colunas...';
-  try{const result=await api('/api/extrair-roteiro',{method:'POST',body:JSON.stringify({paginas:rawPdfPages,camposPreliminares:formData()})});for(const [key,val] of Object.entries(result)){if($(key)&&key!=='linkVideo')$(key).value=val||'';}if(result.linkVideo||!value('linkVideo'))$('linkVideo').value=result.linkVideo||annotatedLinks.find(u=>/youtu\.?be|youtube|vimeo/i.test(u))||'';$('pdfStatus').textContent='Interpretação concluída. Revise as cenas e confira as páginas do roteiro.';checkDuplicate();renderAlerts();}
+  try{const result=await api('/api/extrair-roteiro',{method:'POST',body:JSON.stringify({paginas:rawPdfPages,camposPreliminares:formData()})});for(const [key,val] of Object.entries(result)){const colunaVisual=/^cena[1-5]Img$/.test(key);if($(key)&&key!=='linkVideo'&&String(val||'').trim()&&!(colunaVisual&&value(key)))$(key).value=val;}if(result.linkVideo||!value('linkVideo'))$('linkVideo').value=result.linkVideo||annotatedLinks.find(u=>/youtu\.?be|youtube|vimeo/i.test(u))||'';$('pdfStatus').textContent='Interpretação concluída. Revise as cenas e confira as páginas do roteiro.';checkDuplicate();renderAlerts();}
   catch(e){$('pdfStatus').textContent=`Não foi possível interpretar: ${e.message}. Os campos preliminares permanecem para revisão manual.`;}finally{b.disabled=false;b.textContent='Reinterpretar roteiro com IA';}
 }
 async function importPdf(file){
