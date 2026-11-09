@@ -245,7 +245,7 @@ Para rodar os testes automáticos: `npm test`.
 | `OPENAI_MODEL` | Não (padrão `gpt-4o-mini`) | Modelo da OpenAI. |
 | `ANTHROPIC_API_KEY` | Não | Chave da Anthropic (Claude). |
 | `ANTHROPIC_MODEL` | Não (padrão `claude-haiku-5-5`) | Modelo da Anthropic. |
-| `IA_MAX_TOKENS` | Não (padrão `8192`) | Tamanho máximo da resposta da Anthropic. |
+| `IA_MAX_TOKENS` | Não (padrão `16000`) | Tamanho máximo da resposta da Anthropic (se cortar, o app tenta de novo com o dobro). |
 | `GITHUB_DATA_OWNER` | Não (padrão `rgbittencourt`) | Dono do repositório de backup. |
 | `GITHUB_DATA_REPO` | Não (padrão `avaliador-p2-dados`) | Repositório de backup. |
 | `GITHUB_DATA_BRANCH` | Não (padrão `main`) | Branch do backup. |
