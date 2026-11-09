@@ -366,6 +366,6 @@ document.addEventListener('DOMContentLoaded',async()=>{try{if(window.pdfjsLib)pd
 // Bloco de coerência (complementar), logo abaixo do Feedback gerado.
 if(window.CoerenciaUI)CoerenciaUI.montar({depoisDe:$('feedback').closest('section'),tagCard:'section',coletar:()=>formData(),api,
   titulo:'Coerência do roteiro e do vídeo',produto:'do roteiro e do vídeo',
-  oQue:'Do <b>roteiro</b> (cenas, voz e imagens) e do <b>vídeo</b> produzidos pelo estudante.',
-  comOQue:'Com o <b>desafio</b> que ele definiu e com o <b>público</b> implicado nesse desafio (identificado no próprio texto do desafio, já que a P2 não tem campo de público-alvo).',
-  aspectos:['se o roteiro apresenta o desafio com clareza e mostra por que ele importa para aquele público;','se as imagens e linguagens escolhidas dialogam com esse público;','se o vídeo ajudaria esse público a compreender o problema e a se envolver com ele, e não apenas apresentaria o tema de forma genérica.']});
+  explicacao:'Uma única análise semântica relaciona o <b>roteiro</b> (cenas, voz e imagens) e o <b>vídeo</b> com o <b>desafio</b> do estudante e o <b>público</b> implicado nele: o roteiro apresenta o desafio com clareza, as linguagens dialogam com esse público e o vídeo ajudaria esse público a compreender o problema e a se envolver com ele? Ela não altera a rubrica, a nota nem o feedback da avaliação.',
+  dicaAnalise:'Parecer técnico ao professor sobre a coerência do roteiro e do vídeo com o desafio e o público. Totalmente editável.',
+  dicaFeedback:'Mensagem pedagógica ao estudante sobre essa coerência. Totalmente editável.'});
