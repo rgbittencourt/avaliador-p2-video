@@ -13,7 +13,7 @@ O guia tem quatro partes:
 
 ## Visão geral em uma frase
 
-Você sobe o código para um repositório no GitHub, cria um serviço no Render a partir do `render.yaml`, informa quatro segredos (senha, chave da OpenAI, banco de dados e token de backup) e acessa o endereço gerado. No app, você cria uma turma, importa o roteiro em PDF, assiste ao vídeo, preenche a rubrica (com ajuda da IA), gera o feedback e salva. O relatório executivo consolida a turma.
+Você sobe o código para um repositório no GitHub, cria um serviço no Render a partir do `render.yaml`, informa os segredos (senha, chave de IA da OpenAI ou da Anthropic, banco de dados e token de backup) e acessa o endereço gerado. No app, você cria uma turma, importa o roteiro em PDF, assiste ao vídeo, preenche a rubrica (com ajuda da IA), gera o feedback e salva. O relatório executivo consolida a turma.
 
 ---
 
@@ -24,9 +24,9 @@ Você sobe o código para um repositório no GitHub, cria um serviço no Render 
 1. **GitHub** — para hospedar o código e os dados. (https://github.com)
 2. **Render** — para rodar o app. (https://render.com)
 3. **Neon** — banco PostgreSQL gratuito, para guardar as turmas com segurança. (https://neon.tech)
-4. **OpenAI** — *opcional*, só se quiser o botão "Avaliar automaticamente" e a leitura semântica do roteiro. (https://platform.openai.com)
+4. **IA (OpenAI ou Anthropic/Claude)** — *opcional*, só se quiser o botão "Avaliar automaticamente" e a leitura semântica do roteiro. Basta uma das duas: OpenAI (https://platform.openai.com) ou Anthropic (https://console.anthropic.com).
 
-> Sem a OpenAI o app funciona normalmente: a avaliação automática usa uma versão **local** mais conservadora e você ajusta a rubrica manualmente. Sem o Neon o app roda, mas os dados ficam em arquivo temporário e **podem se perder** quando o Render reinicia — por isso o banco é fortemente recomendado.
+> Sem chave de IA o app funciona normalmente: a avaliação automática usa uma versão **local** mais conservadora e você ajusta a rubrica manualmente. Sem o Neon o app roda, mas os dados ficam em arquivo temporário e **podem se perder** quando o Render reinicia — por isso o banco é fortemente recomendado.
 
 ---
 
@@ -69,12 +69,21 @@ Este repositório guarda uma **cópia de segurança** das turmas em JSON, versio
 
 ---
 
-## Passo 4 — Obter a chave da OpenAI (opcional)
+## Passo 4 — Obter a chave de IA (opcional)
 
+O app funciona com **OpenAI** ou com **Anthropic (Claude)**. Você escolhe qual usar na variável `IA_PROVEDOR` (`openai` ou `anthropic`) e pode trocar a qualquer momento no Render, sem mexer no código.
+
+**OpenAI**
 1. Em https://platform.openai.com/api-keys clique em **Create new secret key**.
 2. Copie a chave (começa com `sk-...`). Ela será **`OPENAI_API_KEY`**.
+3. O modelo padrão é o `gpt-4o-mini`. Dá para trocar em `OPENAI_MODEL`.
 
-> O modelo padrão é o `gpt-4o-mini` (barato). Dá para trocar em `OPENAI_MODEL`.
+**Anthropic (Claude)**
+1. Em https://console.anthropic.com, abra **API Keys** e clique em **Create Key**.
+2. Copie a chave (começa com `sk-ant-...`). Ela será **`ANTHROPIC_API_KEY`**.
+3. O modelo padrão é o `claude-haiku-5-5`. Dá para trocar em `ANTHROPIC_MODEL` (por exemplo, `claude-sonnet-5-5`).
+
+> Pode cadastrar as duas chaves e alternar só mudando `IA_PROVEDOR`. Se `IA_PROVEDOR` ficar vazia, o app usa a OpenAI quando houver a chave dela; senão, a Anthropic.
 
 ---
 
@@ -102,11 +111,12 @@ Na tela do serviço, em **Environment**, preencha (os marcados como `sync: false
 | Variável | O que colocar |
 |---|---|
 | `APP_PASSWORD` | **Crie uma senha** forte — será pedida para usar o app. |
-| `OPENAI_API_KEY` | A chave `sk-...` do Passo 4 (deixe em branco se não for usar IA). |
+| `OPENAI_API_KEY` | A chave `sk-...` da OpenAI (Passo 4; em branco se não for usar). |
+| `ANTHROPIC_API_KEY` | A chave `sk-ant-...` da Anthropic (Passo 4; em branco se não for usar). |
 | `DATABASE_URL` | A connection string do Neon (Passo 3). |
 | `GITHUB_DATA_TOKEN` | O token do Passo 5 (deixe em branco se não for usar backup). |
 
-Já vêm preenchidas (não precisa mexer): `APP_USERNAME` = `professor`, `OPENAI_MODEL` = `gpt-4o-mini`, e os `GITHUB_DATA_OWNER/REPO/BRANCH/PATH`.
+Já vêm preenchidas (não precisa mexer): `APP_USERNAME` = `professor`, `IA_PROVEDOR` = `openai`, `OPENAI_MODEL` = `gpt-4o-mini`, `ANTHROPIC_MODEL` = `claude-haiku-5-5`, e os `GITHUB_DATA_OWNER/REPO/BRANCH/PATH`.
 
 Clique em **Save changes**. O Render reconstrói e publica.
 
@@ -142,7 +152,7 @@ A tela tem a **coluna da esquerda** (importar, vídeo, dados, rubrica) e a **col
 
 1. No bloco **1. Importar roteiro do aluno (PDF)**, clique em **Choose File** e selecione o PDF do roteiro.
 2. O app lê as páginas, separa as colunas **Voz** e **Imagens/Outros** e preenche automaticamente as **Cenas 1 a 5**, o nome, a matrícula e o tema/desafio.
-3. Se algum campo vier torto, clique em **Reinterpretar roteiro com IA** (precisa da chave OpenAI) ou ajuste à mão. Use **Ver páginas do roteiro** para conferir o original.
+3. Se algum campo vier torto, clique em **Reinterpretar roteiro com IA** (precisa da chave de IA) ou ajuste à mão. Use **Ver páginas do roteiro** para conferir o original.
 
 > Nada do PDF vai para o servidor; a leitura acontece no seu navegador. Só os campos de texto revisados são enviados à IA, e apenas quando você pede uma análise.
 
@@ -164,7 +174,7 @@ Confira **Nome, Matrícula e Orientador(a)**. O **orientador** define a assinatu
 
 No bloco **4. Rubrica oficial da P2**, marque um nível em cada um dos 11 critérios (4 de Roteiro + 7 de Vídeo). A **nota** (0 a 10) e a tabela colorida à direita se atualizam na hora. Você pode escrever uma **Observação do avaliador** em cada critério.
 
-- Atalho: clique em **✨ Avaliar automaticamente**. Com a chave OpenAI, a IA sugere notas, justificativas, alertas e o feedback a partir do roteiro e das suas observações. **Sempre revise** — a sugestão é um ponto de partida, especialmente nos critérios que dependem de assistir ao vídeo.
+- Atalho: clique em **✨ Avaliar automaticamente**. Com a chave de IA configurada, a IA sugere notas, justificativas, alertas e o feedback a partir do roteiro e das suas observações. **Sempre revise** — a sugestão é um ponto de partida, especialmente nos critérios que dependem de assistir ao vídeo.
 
 ## 6. Feedback
 
@@ -207,9 +217,9 @@ Para rodar os testes automáticos: `npm test`.
 
 **Pede usuário e senha e não entra.** Usuário é `professor` (ou o que estiver em `APP_USERNAME`); a senha é a que você pôs em `APP_PASSWORD`. Se esqueceu, troque a variável no Render e salve.
 
-**O botão "Avaliar automaticamente" dá erro ou vem "local".** Falta a `OPENAI_API_KEY`, ela está inválida, ou sem créditos. O app cai para a avaliação local conservadora — revise as notas manualmente.
+**O botão "Avaliar automaticamente" dá erro ou vem "local".** Falta a chave do provedor escolhido em `IA_PROVEDOR` (`OPENAI_API_KEY` ou `ANTHROPIC_API_KEY`), ela está inválida, ou sem créditos. Abra `/api/health` para ver qual provedor e modelo estão ativos. O app cai para a avaliação local conservadora — revise as notas manualmente.
 
-**"Reinterpretar roteiro com IA" não funciona.** Mesmo motivo: depende da chave OpenAI. A leitura preliminar (sem IA) continua preenchendo os campos.
+**"Reinterpretar roteiro com IA" não funciona.** Mesmo motivo: depende da chave de IA. A leitura preliminar (sem IA) continua preenchendo os campos.
 
 **A duração não preencheu sozinha no YouTube.** Dê **play** no vídeo embutido — a duração chega logo após iniciar. Em Vimeo/Drive, informe no campo "Duração do vídeo" ou carregue o MP4.
 
@@ -230,8 +240,12 @@ Para rodar os testes automáticos: `npm test`.
 | `APP_PASSWORD` | **Sim** (em produção) | Senha de acesso ao app. |
 | `APP_USERNAME` | Não (padrão `professor`) | Usuário de acesso. |
 | `DATABASE_URL` | **Sim** (em produção) | Banco PostgreSQL/Neon — guarda as turmas. |
-| `OPENAI_API_KEY` | Não | Habilita avaliação automática e leitura semântica. |
+| `IA_PROVEDOR` | Não (`openai` ou `anthropic`) | Qual IA usar. Vazio: OpenAI se houver chave, senão Anthropic. |
+| `OPENAI_API_KEY` | Não | Chave da OpenAI. |
 | `OPENAI_MODEL` | Não (padrão `gpt-4o-mini`) | Modelo da OpenAI. |
+| `ANTHROPIC_API_KEY` | Não | Chave da Anthropic (Claude). |
+| `ANTHROPIC_MODEL` | Não (padrão `claude-haiku-5-5`) | Modelo da Anthropic. |
+| `IA_MAX_TOKENS` | Não (padrão `8192`) | Tamanho máximo da resposta da Anthropic. |
 | `GITHUB_DATA_OWNER` | Não (padrão `rgbittencourt`) | Dono do repositório de backup. |
 | `GITHUB_DATA_REPO` | Não (padrão `avaliador-p2-dados`) | Repositório de backup. |
 | `GITHUB_DATA_BRANCH` | Não (padrão `main`) | Branch do backup. |
@@ -246,7 +260,7 @@ Para rodar os testes automáticos: `npm test`.
 1. Suba o código num repositório GitHub.
 2. Crie o repositório privado `avaliador-p2-dados` (vazio).
 3. Crie um banco no Neon e copie a `DATABASE_URL`.
-4. (Opcional) chave OpenAI e token do GitHub.
+4. (Opcional) chave de IA (OpenAI ou Anthropic) e token do GitHub.
 5. Render → New → Blueprint → selecione o repo → Apply.
-6. Preencha `APP_PASSWORD`, `DATABASE_URL`, `OPENAI_API_KEY`, `GITHUB_DATA_TOKEN`.
+6. Preencha `APP_PASSWORD`, `DATABASE_URL`, `GITHUB_DATA_TOKEN` e a chave de IA (`OPENAI_API_KEY` e/ou `ANTHROPIC_API_KEY`, conforme `IA_PROVEDOR`).
 7. Abra `/api/health`, depois o app, e instale como PWA.

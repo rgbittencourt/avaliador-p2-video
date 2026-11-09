@@ -3,11 +3,11 @@ const express = require('express');
 const path = require('path');
 const {RUBRICA, ORDEM, PONTOS_MAXIMOS, notaFinal} = require('./rubrica');
 const db = require('./db');
+const {configIA, chamarIA, statusIA} = require('./ia');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || '';
-const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+const IA = configIA();
 const APP_USERNAME = process.env.APP_USERNAME || 'professor';
 const APP_PASSWORD = process.env.APP_PASSWORD || '';
 
@@ -33,15 +33,15 @@ app.use(express.static(path.join(__dirname,'public')));
 app.get('/api/health',async(_req,res)=>{
   try{
     const infraestrutura=await db.verificarSaude();
-    res.json({ok:true,openaiConfigurada:Boolean(OPENAI_API_KEY),...infraestrutura});
+    res.json({ok:true,openaiConfigurada:IA.configurada,...statusIA(IA),...infraestrutura});
   }catch(e){
-    res.status(503).json({ok:false,openaiConfigurada:Boolean(OPENAI_API_KEY),erro:'Falha na infraestrutura persistente.'});
+    res.status(503).json({ok:false,openaiConfigurada:IA.configurada,...statusIA(IA),erro:'Falha na infraestrutura persistente.'});
   }
 });
 
 function precisaChave(res){
-  if(OPENAI_API_KEY) return false;
-  res.status(401).json({erro:'OPENAI_API_KEY não configurada no servidor.'});
+  if(IA.configurada) return false;
+  res.status(401).json({erro:`${IA.variavelChave} não configurada no servidor.`});
   return true;
 }
 
@@ -141,24 +141,11 @@ function limparAvaliacao(resultado={},campos={}){
   return {pontuacoes,soma,nota:notaFinal(soma),alertas:Array.isArray(resultado.alertas)?resultado.alertas.map(String).filter(Boolean):[],feedback};
 }
 
-async function chamarOpenAI(prompt,temperatura=0.2){
-  const resposta=await fetch('https://api.openai.com/v1/chat/completions',{
-    method:'POST',headers:{Authorization:`Bearer ${OPENAI_API_KEY}`,'Content-Type':'application/json'},
-    body:JSON.stringify({model:OPENAI_MODEL,response_format:{type:'json_object'},temperature:temperatura,messages:[{role:'user',content:prompt}]})
-  });
-  if(!resposta.ok){
-    const detalhe=await resposta.text().catch(()=>'');
-    console.error('OpenAI',resposta.status,detalhe);
-    throw new Error(`A API da OpenAI recusou a análise (${resposta.status}).`);
-  }
-  const data=await resposta.json();
-  return JSON.parse(data.choices?.[0]?.message?.content||'{}');
-}
 
 app.post('/api/avaliar',async(req,res)=>{
   const campos=req.body||{};
-  if(!OPENAI_API_KEY) return res.json(avaliarLocalmente(campos));
-  try{res.json(limparAvaliacao(await chamarOpenAI(montarPrompt(campos)),campos));}
+  if(!IA.configurada) return res.json(avaliarLocalmente(campos));
+  try{res.json(limparAvaliacao(await chamarIA(montarPrompt(campos)),campos));}
   catch(e){
     const fallback=avaliarLocalmente(campos);
     fallback.modo='local-fallback';
@@ -240,7 +227,7 @@ function limparExtracaoSemantica(resultado={}){
 
 app.post('/api/extrair-roteiro',async(req,res)=>{
   if(precisaChave(res)) return;
-  try{res.json(limparExtracaoSemantica(await chamarOpenAI(montarPromptExtracao(req.body||{}),0)));}
+  try{res.json(limparExtracaoSemantica(await chamarIA(montarPromptExtracao(req.body||{}),0)));}
   catch(e){res.status(502).json({erro:e.message});}
 });
 
