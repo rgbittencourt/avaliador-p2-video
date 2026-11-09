@@ -3,7 +3,7 @@ const express = require('express');
 const path = require('path');
 const {RUBRICA, ORDEM, PONTOS_MAXIMOS, notaFinal} = require('./rubrica');
 const db = require('./db');
-const {configIA, chamarIA, statusIA} = require('./ia');
+const {configIA, configDaRequisicao, chamarIA, statusIA} = require('./ia');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,11 +24,13 @@ app.use((req,res,next)=>{
   let usuario='', senha='';
   try{ [usuario,senha] = Buffer.from(header.replace(/^Basic\s+/i,''),'base64').toString('utf8').split(':'); }catch{}
   if(usuario === APP_USERNAME && senha === APP_PASSWORD) return next();
-  res.set('WWW-Authenticate','Basic realm="Avaliador P2 Vídeo e Roteiro", charset="UTF-8"');
+  res.set('X-Login-Necessario', '1'); // sem WWW-Authenticate: a janela de login é a do app, não a do navegador
   return res.status(401).send('Autenticação necessária.');
 });
 
 app.use(express.json({limit:'4mb'}));
+app.use((req,_res,next)=>{req.ia=configDaRequisicao(req);next();});
+const chamarIAReq=(req,prompt,temperatura)=>chamarIA(prompt,temperatura,{config:req.ia});
 app.use(express.static(path.join(__dirname,'public')));
 app.get('/api/health',async(_req,res)=>{
   try{
@@ -40,8 +42,8 @@ app.get('/api/health',async(_req,res)=>{
 });
 
 function precisaChave(res){
-  if(IA.configurada) return false;
-  res.status(401).json({erro:`${IA.variavelChave} não configurada no servidor.`});
+  if(res.req.ia.configurada) return false;
+  res.status(401).json({erro:`${res.req.ia.variavelChave} não configurada no servidor.`});
   return true;
 }
 
@@ -144,8 +146,8 @@ function limparAvaliacao(resultado={},campos={}){
 
 app.post('/api/avaliar',async(req,res)=>{
   const campos=req.body||{};
-  if(!IA.configurada) return res.json(avaliarLocalmente(campos));
-  try{res.json(limparAvaliacao(await chamarIA(montarPrompt(campos)),campos));}
+  if(!req.ia.configurada) return res.json(avaliarLocalmente(campos));
+  try{res.json(limparAvaliacao(await chamarIAReq(req,montarPrompt(campos)),campos));}
   catch(e){
     const fallback=avaliarLocalmente(campos);
     fallback.modo='local-fallback';
@@ -227,7 +229,7 @@ function limparExtracaoSemantica(resultado={}){
 
 app.post('/api/extrair-roteiro',async(req,res)=>{
   if(precisaChave(res)) return;
-  try{res.json(limparExtracaoSemantica(await chamarIA(montarPromptExtracao(req.body||{}),0)));}
+  try{res.json(limparExtracaoSemantica(await chamarIAReq(req,montarPromptExtracao(req.body||{}),0)));}
   catch(e){res.status(502).json({erro:e.message});}
 });
 
