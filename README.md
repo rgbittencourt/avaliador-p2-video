@@ -2,6 +2,12 @@
 
 PWA para apoiar a avaliação da atividade **P2 - Portfólio "Apresentando meu desafio"** do TEDPRO/IFSC. A ferramenta segue os 11 descritores da rubrica oficial (4 de roteiro + 7 de vídeo) e converte a pontuação para a escala de 0 a 10.
 
+## Aplicativo publicado
+
+- **App (P2 Roteiro e Vídeo):** https://avaliador-p2-video.onrender.com
+- **Verificação do servidor:** https://avaliador-p2-video.onrender.com/api/health
+- Hospedagem: Render (serviço `avaliador-p2-video`). O plano gratuito "dorme" sem uso: a primeira abertura pode levar uns 50 segundos.
+
 ## Funcionalidades
 
 - importação do roteiro em PDF no modelo oficial da P2 (Cenas 1 a 5, colunas Voz/Imagens/Outros);
