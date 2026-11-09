@@ -4,6 +4,7 @@ const path = require('path');
 const {RUBRICA, ORDEM, PONTOS_MAXIMOS, notaFinal} = require('./rubrica');
 const db = require('./db');
 const {configIA, configDaRequisicao, chamarIA, statusIA} = require('./ia');
+const { montarPromptCoerencia, limparSaidaCoerencia } = require('./coerencia');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -233,7 +234,35 @@ app.post('/api/extrair-roteiro',async(req,res)=>{
   catch(e){res.status(502).json({erro:e.message});}
 });
 
+// ---------- Coerência (complementar, sem pontuação) ----------
+const ASSINATURA_COERENCIA = (c) => assinatura(c);
+function atividadeCoerencia(c = {}) {
+  const cenas = [1, 2, 3, 4, 5].map((n) => `Cena ${n}: voz "${String(c[`cena${n}Voz`] || '').trim() || '(vazio)'}" | imagens "${String(c[`cena${n}Img`] || '').trim() || '(vazio)'}"`).join('\n');
+  return {
+    nome: 'P2 - Portfólio "Apresentando meu desafio" (roteiro + vídeo)',
+    produto: 'roteiro em 5 cenas (voz e imagens) e vídeo curto que apresenta o desafio do estudante',
+    cadeia: 'desafio -> público implicado no desafio -> mensagem e linguagens escolhidas no roteiro -> vídeo -> potencial de mobilizar e servir ao público no enfrentamento do desafio',
+    criterios: [
+      'Nesta atividade não há campo próprio de público-alvo: identifique o público a partir do texto do desafio (por exemplo, "Como podemos ... para/com ..."). Se ele não estiver explícito, diga isso como limitação, sem inventar.',
+      'Verifique se o roteiro apresenta o desafio com clareza, mostra por que ele importa para aquele público e se as imagens e linguagens escolhidas dialogam com esse público.',
+      'Avalie se o vídeo, do modo como foi planejado e registrado, ajudaria aquele público a compreender o problema e a se envolver com ele, ou se fica apenas como uma apresentação genérica do tema.'
+    ],
+    evidencia: 'O conteúdo do vídeo não é lido automaticamente: use o roteiro e as observações registradas pelo professor. Sem evidência do vídeo, escreva "o roteiro propõe", nunca "no vídeo você mostra".',
+    campos: [
+      ['Nome', c.nome], ['Desafio', c.desafio], ['Roteiro', '\n' + cenas],
+      ['Observações sobre as linguagens', c.obsLinguagens], ['Duração do vídeo', c.videoDuracao],
+      ['Observações técnicas do vídeo (professor)', c.videoTecnico], ['Observações gerais do vídeo (professor)', c.videoObservacao]
+    ]
+  };
+}
+app.post('/api/analisar-coerencia', async (req, res) => {
+  if (!req.ia.configurada) return res.status(401).json({ erro: `${req.ia.variavelChave} não configurada no servidor. A análise de coerência precisa de IA.` });
+  const campos = req.body || {};
+  try { res.json(limparSaidaCoerencia(await chamarIAReq(req, montarPromptCoerencia(atividadeCoerencia(campos)), 0.25), ASSINATURA_COERENCIA(campos))); }
+  catch (e) { res.status(e.status || 502).json({ erro: e.message }); }
+});
+
 app.use((err,_req,res,_next)=>res.status(500).json({erro:err.message||'Erro interno.'}));
 
 if(require.main===module) app.listen(PORT,()=>console.log(`Avaliador P2 em http://localhost:${PORT}`));
-module.exports={app,montarPrompt,montarPromptExtracao,limparExtracaoSemantica,limparAvaliacao,avaliarLocalmente,pontoValido,assinatura,duracaoSegundos};
+module.exports={atividadeCoerencia,app,montarPrompt,montarPromptExtracao,limparExtracaoSemantica,limparAvaliacao,avaliarLocalmente,pontoValido,assinatura,duracaoSegundos};
